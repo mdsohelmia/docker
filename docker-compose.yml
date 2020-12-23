@@ -1,0 +1,67 @@
+version: "3.7"
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: base-nginx
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./:/var/www/html:cached
+      - ./.docker/nginx:/etc/nginx/conf.d
+      - ./.docker/nginx/ssl:/etc/nginx/conf.d/ssl
+    networks:
+      - base-network
+    depends_on:
+      - app
+
+  app:
+    build:
+      context: ./.docker/app
+      dockerfile: Dockerfile
+    container_name: base-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html:cached
+      - ./.docker/app/php-fpm.ini:/usr/local/etc/php/conf.d/99-app.ini
+    networks:
+      - base-network
+    depends_on:
+      - mysql
+      - redis
+
+  mysql:
+    image: 'mysql:8.0'
+    container_name: base-mysql
+    restart: unless-stopped
+    ports:
+      - 3306:3306
+    volumes:
+      - base-volume:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=base
+      - MYSQL_PASSWORD=base
+      - MYSQL_DATABASE=base
+    networks:
+      - base-network
+
+  redis:
+    image: redis:alpine
+    container_name: base-redis
+    volumes:
+      - base-volume:/data
+    networks:
+      - base-network
+
+networks:
+  base-network:
+    driver: bridge
+
+volumes:
+  base-volume:
+    driver: local
+
