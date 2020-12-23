@@ -1,4 +1,4 @@
-## Laravel Twitter Clone
+## Laravel Base
 
 ### Prerequisites
 
